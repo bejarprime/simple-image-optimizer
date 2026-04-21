@@ -1,4 +1,4 @@
-﻿=== Simple Image Optimizer ===
+=== Simple Image Optimizer ===
 Contributors: wphubb
 Tags: images, optimization, webp, media, performance
 Requires at least: 6.0
@@ -29,6 +29,7 @@ This plugin does not send files to external APIs and does not include tracking.
 * Optional local backups of original files.
 * Processing in small batches to reduce timeout risk.
 * Basic optimization stats.
+* Latest results panel with before/after size, saved bytes, WebP and backup status.
 
 == Installation ==
 

@@ -80,6 +80,16 @@ class SIO_Admin {
 				'confirmOptimize'  => __( 'Start optimizing the selected images? Backups are created when enabled in settings.', 'simple-image-optimizer' ),
 				'genericError'     => __( 'Something went wrong. Please try again.', 'simple-image-optimizer' ),
 				'bytesSavedLabel'  => __( 'estimated saved', 'simple-image-optimizer' ),
+				'labels'           => array(
+					'optimized' => __( 'Optimized', 'simple-image-optimizer' ),
+					'skipped'   => __( 'Skipped', 'simple-image-optimizer' ),
+					'error'     => __( 'Error', 'simple-image-optimizer' ),
+					'before'    => __( 'Before:', 'simple-image-optimizer' ),
+					'after'     => __( 'After:', 'simple-image-optimizer' ),
+					'saved'     => __( 'Saved:', 'simple-image-optimizer' ),
+					'webp'      => __( 'WebP', 'simple-image-optimizer' ),
+					'backup'    => __( 'Backup', 'simple-image-optimizer' ),
+				),
 			)
 		);
 	}
@@ -113,6 +123,7 @@ class SIO_Admin {
 
 		$options      = $this->options->get();
 		$stats        = $this->options->get_stats();
+		$recent       = $this->options->get_recent_results();
 		$capabilities = $this->capabilities->get();
 		$ready        = ! empty( $capabilities['can_process_local'] ) && ! empty( $capabilities['uploads_writable'] );
 		?>
@@ -142,6 +153,7 @@ class SIO_Admin {
 						<?php $this->render_server_card( $capabilities ); ?>
 						<?php $this->render_optimizer_card( $ready ); ?>
 						<?php $this->render_stats_card( $stats ); ?>
+						<?php $this->render_recent_results_card( $recent ); ?>
 					</div>
 					<div>
 						<?php $this->render_settings_form( $options ); ?>
@@ -284,6 +296,87 @@ class SIO_Admin {
 			<p class="submit sio-submit"><button type="submit" class="wphubb-button wphubb-button-primary"><?php echo esc_html__( 'Save settings', 'simple-image-optimizer' ); ?></button></p>
 		</form>
 		<?php
+	}
+
+	/**
+	 * Render recent results.
+	 *
+	 * @param array $recent Recent result rows.
+	 * @return void
+	 */
+	private function render_recent_results_card( array $recent ) {
+		?>
+		<div class="wphubb-card">
+			<h2><?php echo esc_html__( 'Latest results', 'simple-image-optimizer' ); ?></h2>
+			<p><?php echo esc_html__( 'Review what happened during the latest optimizations without opening the uploads folder.', 'simple-image-optimizer' ); ?></p>
+
+			<div class="sio-results-list" data-sio-results-list>
+				<?php if ( empty( $recent ) ) : ?>
+					<div class="sio-empty-state" data-sio-empty-results>
+						<?php echo esc_html__( 'No optimization results yet. Run a scan and optimize images to see details here.', 'simple-image-optimizer' ); ?>
+					</div>
+				<?php else : ?>
+					<?php foreach ( array_reverse( $recent ) as $result ) : ?>
+						<?php $this->render_recent_result_row( $result ); ?>
+					<?php endforeach; ?>
+				<?php endif; ?>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render one recent result.
+	 *
+	 * @param array $result Result row.
+	 * @return void
+	 */
+	private function render_recent_result_row( array $result ) {
+		$status = isset( $result['status'] ) ? $result['status'] : 'error';
+		$badge  = 'optimized' === $status ? 'wphubb-badge-active' : ( 'skipped' === $status ? 'wphubb-badge-inactive' : 'wphubb-badge-warning' );
+		$title  = ! empty( $result['title'] ) ? $result['title'] : $result['filename'];
+		$saved  = isset( $result['bytes_saved'] ) ? (int) $result['bytes_saved'] : 0;
+		?>
+		<div class="sio-result-row">
+			<div class="sio-result-main">
+				<span class="wphubb-badge <?php echo esc_attr( $badge ); ?>"><?php echo esc_html( $this->get_status_label( $status ) ); ?></span>
+				<strong><?php echo esc_html( $title ); ?></strong>
+				<span><?php echo esc_html( $result['message'] ); ?></span>
+			</div>
+
+			<div class="sio-result-meta">
+				<span><?php echo esc_html__( 'Before:', 'simple-image-optimizer' ); ?> <strong><?php echo esc_html( size_format( (int) $result['bytes_before'], 1 ) ); ?></strong></span>
+				<span><?php echo esc_html__( 'After:', 'simple-image-optimizer' ); ?> <strong><?php echo esc_html( size_format( (int) $result['bytes_after'], 1 ) ); ?></strong></span>
+				<span><?php echo esc_html__( 'Saved:', 'simple-image-optimizer' ); ?> <strong><?php echo esc_html( size_format( $saved, 1 ) ); ?></strong></span>
+			</div>
+
+			<div class="sio-result-flags">
+				<span class="sio-flag <?php echo ! empty( $result['webp_created'] ) ? 'sio-flag-ok' : ''; ?>"><?php echo esc_html__( 'WebP', 'simple-image-optimizer' ); ?></span>
+				<span class="sio-flag <?php echo ! empty( $result['backup_created'] ) ? 'sio-flag-ok' : ''; ?>"><?php echo esc_html__( 'Backup', 'simple-image-optimizer' ); ?></span>
+				<?php if ( ! empty( $result['time'] ) ) : ?>
+					<span class="sio-result-time"><?php echo esc_html( $result['time'] ); ?></span>
+				<?php endif; ?>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Get a readable result status label.
+	 *
+	 * @param string $status Status key.
+	 * @return string
+	 */
+	private function get_status_label( $status ) {
+		if ( 'optimized' === $status ) {
+			return __( 'Optimized', 'simple-image-optimizer' );
+		}
+
+		if ( 'skipped' === $status ) {
+			return __( 'Skipped', 'simple-image-optimizer' );
+		}
+
+		return __( 'Error', 'simple-image-optimizer' );
 	}
 
 	/** Save settings. */

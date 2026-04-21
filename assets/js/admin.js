@@ -143,6 +143,102 @@
 		}
 	}
 
+	function prependRecentResult(result) {
+		var list = qs('[data-sio-results-list]');
+		var empty = qs('[data-sio-empty-results]');
+		var labels = sioAdmin.labels || {};
+
+		if (!list || !result) {
+			return;
+		}
+
+		if (empty) {
+			empty.remove();
+		}
+
+		var row = document.createElement('div');
+		row.className = 'sio-result-row';
+
+		var status = result.status || (result.optimized ? 'optimized' : (result.skipped ? 'skipped' : 'error'));
+		var badgeClass = status === 'optimized' ? 'wphubb-badge-active' : (status === 'skipped' ? 'wphubb-badge-inactive' : 'wphubb-badge-warning');
+		var title = result.title || result.filename || ('#' + result.id);
+		var saved = parseInt(result.bytes_saved || 0, 10);
+
+		row.appendChild(buildResultMain(status, badgeClass, title, result.message || ''));
+		row.appendChild(buildResultMeta(result, saved, labels));
+		row.appendChild(buildResultFlags(result, labels));
+
+		list.prepend(row);
+
+		while (list.children.length > 10) {
+			list.removeChild(list.lastElementChild);
+		}
+	}
+
+	function buildResultMain(status, badgeClass, title, message) {
+		var wrap = document.createElement('div');
+		var badge = document.createElement('span');
+		var strong = document.createElement('strong');
+		var text = document.createElement('span');
+		var labels = sioAdmin.labels || {};
+
+		wrap.className = 'sio-result-main';
+		badge.className = 'wphubb-badge ' + badgeClass;
+		badge.textContent = labels[status] || status;
+		strong.textContent = title;
+		text.textContent = message;
+
+		wrap.appendChild(badge);
+		wrap.appendChild(strong);
+		wrap.appendChild(text);
+
+		return wrap;
+	}
+
+	function buildResultMeta(result, saved, labels) {
+		var wrap = document.createElement('div');
+		wrap.className = 'sio-result-meta';
+
+		[
+			[labels.before || 'Before:', formatBytes(parseInt(result.bytes_before || 0, 10))],
+			[labels.after || 'After:', formatBytes(parseInt(result.bytes_after || 0, 10))],
+			[labels.saved || 'Saved:', formatBytes(saved)]
+		].forEach(function (item) {
+			var span = document.createElement('span');
+			var strong = document.createElement('strong');
+			span.appendChild(document.createTextNode(item[0] + ' '));
+			strong.textContent = item[1];
+			span.appendChild(strong);
+			wrap.appendChild(span);
+		});
+
+		return wrap;
+	}
+
+	function buildResultFlags(result, labels) {
+		var wrap = document.createElement('div');
+		var webp = document.createElement('span');
+		var backup = document.createElement('span');
+
+		wrap.className = 'sio-result-flags';
+		webp.className = 'sio-flag' + (result.webp_created ? ' sio-flag-ok' : '');
+		backup.className = 'sio-flag' + (result.backup_created ? ' sio-flag-ok' : '');
+		webp.textContent = labels.webp || 'WebP';
+		backup.textContent = labels.backup || 'Backup';
+
+		wrap.appendChild(webp);
+		wrap.appendChild(backup);
+
+		if (result.time) {
+			var time = document.createElement('span');
+			time.className = 'sio-result-time';
+			time.textContent = result.time;
+			wrap.appendChild(time);
+		}
+
+		return wrap;
+	}
+
 	function formatBytes(bytes) {
 		if (bytes < 1024) {
 			return bytes + ' B';
@@ -173,6 +269,7 @@
 			(data.results || []).forEach(function (result) {
 				state.processed++;
 				addLog('#' + result.id + ' - ' + result.message, result.optimized ? 'success' : (result.skipped ? '' : 'error'));
+				prependRecentResult(result);
 			});
 			updateStats(data.stats);
 			setProgress(state.processed, state.total, sioAdmin.optimizing + ' ' + state.processed + ' / ' + state.total);

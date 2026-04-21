@@ -71,12 +71,14 @@ class SIO_Ajax {
 			$result    = $this->optimizer->optimize_attachment( $id );
 			$results[] = $result;
 			$this->options->add_result_to_stats( $result );
+			$this->options->record_recent_result( $result );
 		}
 
 		wp_send_json_success(
 			array(
 				'results' => $results,
 				'stats'   => $this->options->get_stats(),
+				'recent'  => $this->options->get_recent_results(),
 			)
 		);
 	}
@@ -85,6 +87,7 @@ class SIO_Ajax {
 	public function reset_stats() {
 		$this->verify_request();
 		update_option( SIO_Options::STATS_OPTION_NAME, SIO_Options::default_stats(), false );
+		update_option( SIO_Options::RECENT_RESULTS_OPTION_NAME, array(), false );
 		wp_send_json_success( array( 'stats' => SIO_Options::default_stats() ) );
 	}
 

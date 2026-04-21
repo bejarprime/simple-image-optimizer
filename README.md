@@ -1,4 +1,4 @@
-﻿# Simple Image Optimizer
+# Simple Image Optimizer
 
 Lightweight local image optimization for WordPress media libraries.
 
@@ -23,6 +23,7 @@ Reduce image weight from the WordPress admin with a simple batch flow:
 - Secure AJAX scanning of candidate media files.
 - Secure AJAX batch optimization with nonces and `manage_options` checks.
 - Basic stats for processed, skipped, errors and estimated saved bytes.
+- Latest results panel with before/after size, saved bytes, WebP and backup status.
 
 ## Important limitation
 
