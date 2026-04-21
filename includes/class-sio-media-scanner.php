@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Media library scanner.
  *

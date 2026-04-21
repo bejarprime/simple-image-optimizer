@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Plugin Name: Simple Image Optimizer
  * Plugin URI: https://github.com/bejarprime/simple-image-optimizer
