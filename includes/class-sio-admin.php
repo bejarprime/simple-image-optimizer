@@ -38,6 +38,8 @@ class SIO_Admin {
 		add_action( 'admin_menu', array( $this, 'add_tools_page' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_filter( 'admin_body_class', array( $this, 'add_admin_body_class' ) );
+		add_filter( 'manage_media_columns', array( $this, 'add_media_column' ) );
+		add_action( 'manage_media_custom_column', array( $this, 'render_media_column' ), 10, 2 );
 	}
 
 	/** Add page under Tools. */
@@ -52,13 +54,13 @@ class SIO_Admin {
 	}
 
 	/**
-	 * Enqueue assets only on plugin page.
+	 * Enqueue assets on plugin page and media library.
 	 *
 	 * @param string $hook Hook suffix.
 	 * @return void
 	 */
 	public function enqueue_assets( $hook ) {
-		if ( $hook !== $this->hook_suffix ) {
+		if ( $hook !== $this->hook_suffix && 'upload.php' !== $hook ) {
 			return;
 		}
 
@@ -78,17 +80,21 @@ class SIO_Admin {
 				'complete'         => __( 'Optimization complete.', 'simple-image-optimizer' ),
 				'noImages'         => __( 'No candidate images found.', 'simple-image-optimizer' ),
 				'confirmOptimize'  => __( 'Start optimizing the selected images? Backups are created when enabled in settings.', 'simple-image-optimizer' ),
+				'confirmRestore'   => __( 'Restore this image from the local backup? Generated WebP files created by this plugin will be removed.', 'simple-image-optimizer' ),
+				'restored'         => __( 'Restored from backup.', 'simple-image-optimizer' ),
 				'genericError'     => __( 'Something went wrong. Please try again.', 'simple-image-optimizer' ),
 				'bytesSavedLabel'  => __( 'estimated saved', 'simple-image-optimizer' ),
 				'labels'           => array(
 					'optimized' => __( 'Optimized', 'simple-image-optimizer' ),
 					'skipped'   => __( 'Skipped', 'simple-image-optimizer' ),
 					'error'     => __( 'Error', 'simple-image-optimizer' ),
+					'restored'  => __( 'Restored', 'simple-image-optimizer' ),
 					'before'    => __( 'Before:', 'simple-image-optimizer' ),
 					'after'     => __( 'After:', 'simple-image-optimizer' ),
 					'saved'     => __( 'Saved:', 'simple-image-optimizer' ),
 					'webp'      => __( 'WebP', 'simple-image-optimizer' ),
 					'backup'    => __( 'Backup', 'simple-image-optimizer' ),
+					'sizes'     => __( 'Sizes:', 'simple-image-optimizer' ),
 				),
 			)
 		);
@@ -283,6 +289,18 @@ class SIO_Admin {
 			</label>
 
 			<label class="wphubb-toggle sio-toggle-line">
+				<input type="checkbox" name="optimize_sizes" value="1" <?php checked( $options['optimize_sizes'] ); ?> />
+				<span class="wphubb-toggle-slider"></span>
+				<span><?php echo esc_html__( 'Optimize generated WordPress sizes', 'simple-image-optimizer' ); ?></span>
+			</label>
+
+			<label class="wphubb-toggle sio-toggle-line">
+				<input type="checkbox" name="auto_optimize" value="1" <?php checked( $options['auto_optimize'] ); ?> />
+				<span class="wphubb-toggle-slider"></span>
+				<span><?php echo esc_html__( 'Automatically optimize new uploads', 'simple-image-optimizer' ); ?></span>
+			</label>
+
+			<label class="wphubb-toggle sio-toggle-line">
 				<input type="checkbox" name="delete_on_uninstall" value="1" <?php checked( $options['delete_on_uninstall'] ); ?> />
 				<span class="wphubb-toggle-slider"></span>
 				<span><?php echo esc_html__( 'Delete plugin settings on uninstall', 'simple-image-optimizer' ); ?></span>
@@ -348,11 +366,25 @@ class SIO_Admin {
 				<span><?php echo esc_html__( 'Before:', 'simple-image-optimizer' ); ?> <strong><?php echo esc_html( size_format( (int) $result['bytes_before'], 1 ) ); ?></strong></span>
 				<span><?php echo esc_html__( 'After:', 'simple-image-optimizer' ); ?> <strong><?php echo esc_html( size_format( (int) $result['bytes_after'], 1 ) ); ?></strong></span>
 				<span><?php echo esc_html__( 'Saved:', 'simple-image-optimizer' ); ?> <strong><?php echo esc_html( size_format( $saved, 1 ) ); ?></strong></span>
+				<span><?php echo esc_html__( 'Sizes:', 'simple-image-optimizer' ); ?> <strong><?php echo esc_html( (int) $result['sizes_processed'] ); ?></strong></span>
 			</div>
 
 			<div class="sio-result-flags">
 				<span class="sio-flag <?php echo ! empty( $result['webp_created'] ) ? 'sio-flag-ok' : ''; ?>"><?php echo esc_html__( 'WebP', 'simple-image-optimizer' ); ?></span>
 				<span class="sio-flag <?php echo ! empty( $result['backup_created'] ) ? 'sio-flag-ok' : ''; ?>"><?php echo esc_html__( 'Backup', 'simple-image-optimizer' ); ?></span>
+				<?php if ( ! empty( $result['sizes_processed'] ) ) : ?>
+					<span class="sio-flag sio-flag-ok">
+						<?php
+						echo esc_html(
+							sprintf(
+								/* translators: %d: optimized generated image sizes. */
+								__( '%d sizes', 'simple-image-optimizer' ),
+								(int) $result['sizes_processed']
+							)
+						);
+						?>
+					</span>
+				<?php endif; ?>
 				<?php if ( ! empty( $result['time'] ) ) : ?>
 					<span class="sio-result-time"><?php echo esc_html( $result['time'] ); ?></span>
 				<?php endif; ?>
@@ -376,7 +408,75 @@ class SIO_Admin {
 			return __( 'Skipped', 'simple-image-optimizer' );
 		}
 
+		if ( 'restored' === $status ) {
+			return __( 'Restored', 'simple-image-optimizer' );
+		}
+
 		return __( 'Error', 'simple-image-optimizer' );
+	}
+
+	/**
+	 * Add optimization column to Media Library list view.
+	 *
+	 * @param array $columns Columns.
+	 * @return array
+	 */
+	public function add_media_column( $columns ) {
+		$columns['sio_optimization'] = __( 'Optimization', 'simple-image-optimizer' );
+		return $columns;
+	}
+
+	/**
+	 * Render media column content.
+	 *
+	 * @param string $column_name Column name.
+	 * @param int    $attachment_id Attachment ID.
+	 * @return void
+	 */
+	public function render_media_column( $column_name, $attachment_id ) {
+		if ( 'sio_optimization' !== $column_name ) {
+			return;
+		}
+
+		$mime = get_post_mime_type( $attachment_id );
+		if ( ! in_array( $mime, SIO_Media_Scanner::SUPPORTED_MIME_TYPES, true ) ) {
+			echo '<span class="sio-media-muted">' . esc_html__( 'Not supported', 'simple-image-optimizer' ) . '</span>';
+			return;
+		}
+
+		$is_optimized    = '1' === (string) get_post_meta( $attachment_id, '_sio_optimized', true );
+		$last_error      = (string) get_post_meta( $attachment_id, '_sio_last_error', true );
+		$bytes_before    = (int) get_post_meta( $attachment_id, '_sio_original_size', true );
+		$bytes_after     = (int) get_post_meta( $attachment_id, '_sio_optimized_size', true );
+		$backup_path     = (string) get_post_meta( $attachment_id, '_sio_backup_path', true );
+		$webp_path       = (string) get_post_meta( $attachment_id, '_sio_webp_path', true );
+		$sizes_processed = (int) get_post_meta( $attachment_id, '_sio_sizes_processed', true );
+		$saved           = max( 0, $bytes_before - $bytes_after );
+
+		echo '<div class="sio-media-status">';
+
+		if ( $is_optimized ) {
+			echo '<span class="sio-media-badge sio-media-badge-ok">' . esc_html__( 'Optimized', 'simple-image-optimizer' ) . '</span>';
+			if ( $saved > 0 ) {
+				echo '<span class="sio-media-line">' . esc_html__( 'Saved:', 'simple-image-optimizer' ) . ' <strong>' . esc_html( size_format( $saved, 1 ) ) . '</strong></span>';
+			}
+			if ( '' !== $webp_path ) {
+				echo '<span class="sio-media-badge sio-media-badge-soft">' . esc_html__( 'WebP', 'simple-image-optimizer' ) . '</span>';
+			}
+			if ( $sizes_processed > 0 ) {
+				echo '<span class="sio-media-badge sio-media-badge-soft">' . esc_html( sprintf( __( '%d sizes', 'simple-image-optimizer' ), $sizes_processed ) ) . '</span>';
+			}
+			if ( '' !== $backup_path ) {
+				echo '<button type="button" class="button button-small sio-media-restore" data-sio-restore-media="' . esc_attr( $attachment_id ) . '">' . esc_html__( 'Restore', 'simple-image-optimizer' ) . '</button>';
+			}
+		} elseif ( '' !== $last_error ) {
+			echo '<span class="sio-media-badge sio-media-badge-error">' . esc_html__( 'Error', 'simple-image-optimizer' ) . '</span>';
+			echo '<span class="sio-media-line">' . esc_html( $last_error ) . '</span>';
+		} else {
+			echo '<span class="sio-media-badge sio-media-badge-pending">' . esc_html__( 'Pending', 'simple-image-optimizer' ) . '</span>';
+		}
+
+		echo '</div>';
 	}
 
 	/** Save settings. */
@@ -394,6 +494,8 @@ class SIO_Admin {
 				'batch_size'          => isset( $_POST['batch_size'] ) ? absint( wp_unslash( $_POST['batch_size'] ) ) : 3,
 				'keep_originals'      => ! empty( $_POST['keep_originals'] ),
 				'generate_webp'       => ! empty( $_POST['generate_webp'] ),
+				'optimize_sizes'      => ! empty( $_POST['optimize_sizes'] ),
+				'auto_optimize'       => ! empty( $_POST['auto_optimize'] ),
 				'delete_on_uninstall' => ! empty( $_POST['delete_on_uninstall'] ),
 			)
 		);

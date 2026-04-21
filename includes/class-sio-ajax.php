@@ -42,6 +42,7 @@ class SIO_Ajax {
 	public function register_hooks() {
 		add_action( 'wp_ajax_sio_scan_media', array( $this, 'scan_media' ) );
 		add_action( 'wp_ajax_sio_optimize_batch', array( $this, 'optimize_batch' ) );
+		add_action( 'wp_ajax_sio_restore_attachment', array( $this, 'restore_attachment' ) );
 		add_action( 'wp_ajax_sio_reset_stats', array( $this, 'reset_stats' ) );
 	}
 
@@ -81,6 +82,25 @@ class SIO_Ajax {
 				'recent'  => $this->options->get_recent_results(),
 			)
 		);
+	}
+
+	/** Restore attachment endpoint. */
+	public function restore_attachment() {
+		$this->verify_request();
+
+		$id = isset( $_POST['id'] ) ? absint( wp_unslash( $_POST['id'] ) ) : 0;
+		if ( 0 === $id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid attachment ID.', 'simple-image-optimizer' ) ), 400 );
+		}
+
+		$result = $this->optimizer->restore_attachment( $id );
+		$this->options->record_recent_result( $result );
+
+		if ( 'restored' !== $result['status'] ) {
+			wp_send_json_error( array( 'message' => $result['message'], 'result' => $result ), 400 );
+		}
+
+		wp_send_json_success( array( 'result' => $result ) );
 	}
 
 	/** Reset stats endpoint. */

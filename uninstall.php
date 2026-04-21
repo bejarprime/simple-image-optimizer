@@ -23,7 +23,10 @@ if ( ! empty( $options['delete_on_uninstall'] ) ) {
 		'_sio_original_size',
 		'_sio_optimized_size',
 		'_sio_webp_path',
+		'_sio_webp_files',
 		'_sio_backup_path',
+		'_sio_backup_files',
+		'_sio_sizes_processed',
 		'_sio_last_error',
 	);
 

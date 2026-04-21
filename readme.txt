@@ -27,9 +27,12 @@ This plugin does not send files to external APIs and does not include tracking.
 * High visual quality defaults.
 * Configurable max width and height.
 * Optional local backups of original files.
+* Optional optimization of generated WordPress image sizes.
+* Optional automatic optimization for new uploads.
 * Processing in small batches to reduce timeout risk.
 * Basic optimization stats.
 * Latest results panel with before/after size, saved bytes, WebP and backup status.
+* Media Library list-view status column with restore action when backups exist.
 
 == Installation ==
 
@@ -52,6 +55,18 @@ The plugin aims to reduce file size while keeping high visual quality. Perfect l
 = Does WebP always work? =
 
 No. WebP generation depends on server support through the available image engine.
+
+= Can I restore an optimized image? =
+
+Yes, when local backups were enabled before optimization. The restore action appears in the Media Library list view for optimized images with a backup.
+
+= Does it optimize thumbnails and generated sizes? =
+
+Yes, this can be enabled or disabled in the plugin settings. It is enabled by default for the generated WordPress sizes tracked in attachment metadata.
+
+= Can it optimize new uploads automatically? =
+
+Yes. Automatic optimization can be enabled in the plugin settings. It is disabled by default so administrators can test the batch workflow first.
 
 = Does it process images in one request? =
 

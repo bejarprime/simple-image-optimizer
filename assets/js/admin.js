@@ -202,7 +202,8 @@
 		[
 			[labels.before || 'Before:', formatBytes(parseInt(result.bytes_before || 0, 10))],
 			[labels.after || 'After:', formatBytes(parseInt(result.bytes_after || 0, 10))],
-			[labels.saved || 'Saved:', formatBytes(saved)]
+			[labels.saved || 'Saved:', formatBytes(saved)],
+			[labels.sizes || 'Sizes:', parseInt(result.sizes_processed || 0, 10)]
 		].forEach(function (item) {
 			var span = document.createElement('span');
 			var strong = document.createElement('strong');
@@ -237,6 +238,26 @@
 		}
 
 		return wrap;
+	}
+
+	function restoreAttachment(button) {
+		var id = button.getAttribute('data-sio-restore-media');
+		var status = button.closest('.sio-media-status');
+
+		if (!id || !window.confirm(sioAdmin.confirmRestore)) {
+			return;
+		}
+
+		button.disabled = true;
+
+		post('sio_restore_attachment', { id: id }).then(function () {
+			if (status) {
+				status.innerHTML = '<span class="sio-media-badge sio-media-badge-pending">' + sioAdmin.restored + '</span>';
+			}
+		}).catch(function (error) {
+			button.disabled = false;
+			window.alert(error.message);
+		});
 	}
 
 	function formatBytes(bytes) {
@@ -308,5 +329,12 @@
 		if (optimize) {
 			optimize.addEventListener('click', startOptimization);
 		}
+
+		document.addEventListener('click', function (event) {
+			var restoreButton = event.target.closest('[data-sio-restore-media]');
+			if (restoreButton) {
+				restoreAttachment(restoreButton);
+			}
+		});
 	});
 }());
