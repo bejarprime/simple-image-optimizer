@@ -9,6 +9,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Main plugin bootstrap.
+ */
 class Simple_Image_Optimizer {
 	/**
 	 * Singleton instance.
@@ -16,6 +19,13 @@ class Simple_Image_Optimizer {
 	 * @var self|null
 	 */
 	private static $instance = null;
+
+	/**
+	 * Options service.
+	 *
+	 * @var SIO_Options
+	 */
+	private $options;
 
 	/**
 	 * Return singleton instance.
@@ -34,7 +44,29 @@ class Simple_Image_Optimizer {
 	 * Constructor.
 	 */
 	private function __construct() {
+		$this->options = new SIO_Options();
+
 		add_action( 'init', array( $this, 'load_textdomain' ) );
+		add_action( 'init', array( $this, 'ensure_options' ), 5 );
+
+		$admin = new SIO_Admin( $this->options, new SIO_Server_Capabilities() );
+		$admin->register_hooks();
+
+		$ajax = new SIO_Ajax(
+			$this->options,
+			new SIO_Media_Scanner(),
+			new SIO_Optimizer( $this->options )
+		);
+		$ajax->register_hooks();
+	}
+
+	/**
+	 * Ensure normalized options exist.
+	 *
+	 * @return void
+	 */
+	public function ensure_options() {
+		SIO_Options::ensure_defaults();
 	}
 
 	/**
