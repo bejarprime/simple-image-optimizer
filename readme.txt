@@ -4,7 +4,7 @@ Tags: images, optimization, webp, media, performance
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 0.1.2
+Stable tag: 0.1.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -91,6 +91,9 @@ This safe mode does not guarantee complete page-builder coverage. Some Elementor
 No. Images are processed in small AJAX batches to reduce timeout risk on shared hosting.
 
 == Changelog ==
+
+= 0.1.3 =
+* Improved admin screen layout to use the full WordPress admin content area without white side bands.
 
 = 0.1.2 =
 * Added opt-in frontend WebP delivery for standard WordPress image output.

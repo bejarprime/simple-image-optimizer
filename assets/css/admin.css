@@ -3,6 +3,27 @@
  * Uses the shared WPHubb design system.
  */
 
+body.simple-image-optimizer-admin-page,
+body.simple-image-optimizer-admin-page #wpwrap,
+body.simple-image-optimizer-admin-page #wpcontent,
+body.simple-image-optimizer-admin-page #wpbody,
+body.simple-image-optimizer-admin-page #wpbody-content {
+	background: #0d0e10;
+}
+
+body.simple-image-optimizer-admin-page #wpbody-content {
+	min-height: calc(100vh - 32px);
+	padding-bottom: 0;
+}
+
+body.simple-image-optimizer-admin-page #wpfooter {
+	display: none;
+}
+
+body.simple-image-optimizer-admin-page .wrap {
+	margin: 0;
+}
+
 .wphubb-admin {
 	--wphubb-accent: #d1fe17;
 	--wphubb-accent-dim: rgba(209, 254, 23, 0.08);
@@ -25,10 +46,11 @@
 	--wphubb-radius-md: 12px;
 	--wphubb-radius-lg: 16px;
 	--wphubb-shadow: 0 18px 50px rgba(0, 0, 0, 0.32);
-	max-width: 1180px;
-	margin: 20px 0;
-	padding: 24px;
-	border-radius: var(--wphubb-radius-lg);
+	width: 100%;
+	min-height: calc(100vh - 32px);
+	margin: 0;
+	padding: 30px;
+	border-radius: 0;
 	background: radial-gradient(circle at top left, rgba(209, 254, 23, 0.08), transparent 34%), var(--wphubb-bg);
 	color: var(--wphubb-text);
 	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, sans-serif;
