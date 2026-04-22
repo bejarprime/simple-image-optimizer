@@ -164,13 +164,13 @@ class SIO_Admin {
 				<?php if ( 'diagnostics' === $active_tab ) : ?>
 					<?php $this->render_diagnostics_tab( $options, $stats, $recent, $capabilities ); ?>
 				<?php else : ?>
-					<div class="wphubb-grid wphubb-grid-2">
-						<div>
+					<div class="wphubb-grid wphubb-grid-2 sio-main-grid">
+						<div class="sio-main-column">
 							<?php $this->render_server_card( $capabilities ); ?>
 							<?php $this->render_optimizer_card( $ready ); ?>
 							<?php $this->render_stats_card( $stats ); ?>
 						</div>
-						<div>
+						<div class="sio-settings-column">
 							<?php $this->render_settings_form( $options ); ?>
 						</div>
 					</div>

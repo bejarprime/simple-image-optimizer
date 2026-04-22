@@ -137,6 +137,8 @@ body.simple-image-optimizer-admin-page .wrap {
 
 .wphubb-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .wphubb-grid-2 { grid-template-columns: minmax(0, 1.45fr) minmax(360px, 0.85fr); }
+.sio-main-grid { align-items: stretch; margin-bottom: 16px; }
+.sio-settings-column { display: flex; flex-direction: column; justify-content: flex-end; }
 
 .wphubb-card {
 	padding: 24px;
@@ -254,6 +256,14 @@ body.simple-image-optimizer-admin-page .wrap {
 .sio-toggle-description { margin: -9px 0 15px 46px; }
 .sio-inline-notice { margin-top: 18px; }
 .sio-submit { margin: 18px 0 0; padding: 0; }
+.sio-settings-card { width: 100%; }
+.sio-settings-card p { margin-bottom: 14px; }
+.sio-settings-card .wphubb-field { margin-bottom: 14px; }
+.sio-settings-card .wphubb-field-description { margin-top: 5px; }
+.sio-settings-card .sio-toggle-line { margin-bottom: 11px; }
+.sio-settings-card .sio-toggle-description { margin: -6px 0 11px 46px; }
+.sio-settings-card .sio-inline-notice { margin-top: 12px; margin-bottom: 14px; padding: 11px 13px; }
+.sio-settings-card .sio-submit { margin-top: 14px; }
 .sio-results-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; max-height: 430px; overflow-y: auto; padding-right: 6px; margin-top: 18px; }
 .sio-results-list .sio-empty-state { grid-column: 1 / -1; }
 .sio-empty-state { padding: 16px; border: 1px dashed var(--wphubb-border); border-radius: var(--wphubb-radius-sm); color: var(--wphubb-muted); background: rgba(255, 255, 255, 0.025); font-size: 13px; line-height: 1.5; }
