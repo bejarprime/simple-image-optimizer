@@ -40,6 +40,7 @@ class SIO_Options {
 			'batch_size'          => 3,
 			'keep_originals'      => true,
 			'generate_webp'       => true,
+			'serve_webp_frontend' => false,
 			'optimize_sizes'      => true,
 			'auto_optimize'       => false,
 			'delete_on_uninstall' => false,
@@ -277,6 +278,7 @@ class SIO_Options {
 		$merged['batch_size']          = min( 10, max( 1, absint( $merged['batch_size'] ) ) );
 		$merged['keep_originals']      = ! empty( $merged['keep_originals'] );
 		$merged['generate_webp']       = ! empty( $merged['generate_webp'] );
+		$merged['serve_webp_frontend'] = ! empty( $merged['serve_webp_frontend'] );
 		$merged['optimize_sizes']      = ! empty( $merged['optimize_sizes'] );
 		$merged['auto_optimize']       = ! empty( $merged['auto_optimize'] );
 		$merged['delete_on_uninstall'] = ! empty( $merged['delete_on_uninstall'] );

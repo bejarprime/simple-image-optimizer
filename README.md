@@ -31,6 +31,7 @@ Reduce image weight from the WordPress admin with a simple batch flow:
 - Safety guard: if a re-encoded file becomes larger than the original, the original file is kept.
 - `View WebP` and `Copy WebP URL` actions in the Media Library list view when a WebP file exists.
 - Diagnostic warning in the Media Library when WebP metadata exists but the file URL cannot be resolved.
+- Optional frontend WebP delivery for standard WordPress image output.
 
 ## Important limitation
 
@@ -48,6 +49,12 @@ Some images are already compressed. In those cases, WordPress/GD/Imagick re-enco
 6. Use `Restore` in the Optimization column if an image needs to be reverted.
 
 If the column shows a WebP badge but no WebP action, the plugin will now show a diagnostic line. That usually means the stored WebP metadata exists, but the file path cannot be mapped back to a public uploads URL.
+
+## Frontend WebP delivery
+
+The `Serve generated WebP on the frontend` setting is disabled by default. When enabled, the plugin replaces local JPEG/PNG uploads with existing generated WebP files in standard WordPress image output, including attachment image URLs, `srcset` sources and image tags processed by WordPress content filters.
+
+This safe mode does not promise full page-builder coverage. Some Elementor or page-builder background images, CSS-generated URLs, external images, CDN rewrites and cached HTML may require a future advanced mode or cache clearing.
 
 ## Status
 

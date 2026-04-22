@@ -191,6 +191,7 @@
 .sio-two-cols .wphubb-input { max-width: none; }
 .sio-small-input { max-width: 120px; }
 .sio-toggle-line { margin: 0 0 15px; }
+.sio-toggle-description { margin: -9px 0 15px 46px; }
 .sio-inline-notice { margin-top: 18px; }
 .sio-submit { margin: 18px 0 0; padding: 0; }
 .sio-results-list { display: grid; gap: 12px; margin-top: 18px; }

@@ -4,7 +4,7 @@ Tags: images, optimization, webp, media, performance
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 0.1.1
+Stable tag: 0.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -36,6 +36,7 @@ This plugin does not send files to external APIs and does not include tracking.
 * Safety guard to keep the original file when re-encoding would make it larger.
 * View and copy WebP URL actions in the Media Library list view.
 * Diagnostic message when WebP metadata exists but the public uploads URL cannot be resolved.
+* Optional frontend WebP delivery for standard WordPress image output.
 
 == Installation ==
 
@@ -79,11 +80,20 @@ Yes, this can be enabled or disabled in the plugin settings. It is enabled by de
 
 Yes. Automatic optimization can be enabled in the plugin settings. It is disabled by default so administrators can test the batch workflow first.
 
+= Can it serve WebP on the frontend? =
+
+Yes. The plugin includes an opt-in setting to serve generated WebP files for standard WordPress image output. It replaces local JPEG/PNG uploads only when a generated WebP sibling file exists.
+
+This safe mode does not guarantee complete page-builder coverage. Some Elementor background images, CSS-generated URLs, external images, CDN rewrites and cached HTML may not be replaced.
+
 = Does it process images in one request? =
 
 No. Images are processed in small AJAX batches to reduce timeout risk on shared hosting.
 
 == Changelog ==
+
+= 0.1.2 =
+* Added opt-in frontend WebP delivery for standard WordPress image output.
 
 = 0.1.1 =
 * Improved WebP URL resolution and Media Library diagnostics when WebP metadata cannot be mapped to a public uploads URL.

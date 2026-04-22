@@ -292,6 +292,15 @@ class SIO_Admin {
 			</label>
 
 			<label class="wphubb-toggle sio-toggle-line">
+				<input type="checkbox" name="serve_webp_frontend" value="1" <?php checked( $options['serve_webp_frontend'] ); ?> />
+				<span class="wphubb-toggle-slider"></span>
+				<span><?php echo esc_html__( 'Serve generated WebP on the frontend for standard WordPress images', 'simple-image-optimizer' ); ?></span>
+			</label>
+			<div class="wphubb-field-description sio-toggle-description">
+				<?php echo esc_html__( 'Safe opt-in mode. It replaces local JPEG/PNG uploads with existing WebP files in standard WordPress image output. Some page builder background images may not be covered.', 'simple-image-optimizer' ); ?>
+			</div>
+
+			<label class="wphubb-toggle sio-toggle-line">
 				<input type="checkbox" name="optimize_sizes" value="1" <?php checked( $options['optimize_sizes'] ); ?> />
 				<span class="wphubb-toggle-slider"></span>
 				<span><?php echo esc_html__( 'Optimize generated WordPress sizes', 'simple-image-optimizer' ); ?></span>
@@ -617,6 +626,7 @@ class SIO_Admin {
 				'batch_size'          => isset( $_POST['batch_size'] ) ? absint( wp_unslash( $_POST['batch_size'] ) ) : 3,
 				'keep_originals'      => ! empty( $_POST['keep_originals'] ),
 				'generate_webp'       => ! empty( $_POST['generate_webp'] ),
+				'serve_webp_frontend' => ! empty( $_POST['serve_webp_frontend'] ),
 				'optimize_sizes'      => ! empty( $_POST['optimize_sizes'] ),
 				'auto_optimize'       => ! empty( $_POST['auto_optimize'] ),
 				'delete_on_uninstall' => ! empty( $_POST['delete_on_uninstall'] ),

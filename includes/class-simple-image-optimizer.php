@@ -61,6 +61,9 @@ class Simple_Image_Optimizer {
 		$admin = new SIO_Admin( $this->options, new SIO_Server_Capabilities() );
 		$admin->register_hooks();
 
+		$frontend = new SIO_Frontend( $this->options );
+		$frontend->register_hooks();
+
 		$ajax = new SIO_Ajax(
 			$this->options,
 			new SIO_Media_Scanner(),
