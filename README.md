@@ -26,6 +26,7 @@ Reduce image weight from the WordPress admin with a simple batch flow:
 - Secure AJAX batch optimization with nonces and `manage_options` checks.
 - Basic stats for processed, skipped, errors and estimated saved bytes.
 - Latest results panel with before/after size, saved bytes, WebP and backup status.
+- Diagnostics tab with server details, plugin settings, stats, recent events and a copyable report.
 - Media Library list-view column with optimization status and restore action when a backup exists.
 - Restore from backup for optimized images, including generated sizes tracked by the plugin.
 - Safety guard: if a re-encoded file becomes larger than the original, the original file is kept.

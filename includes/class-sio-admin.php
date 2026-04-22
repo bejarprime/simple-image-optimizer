@@ -135,6 +135,8 @@ class SIO_Admin {
 		$recent       = $this->options->get_recent_results();
 		$capabilities = $this->capabilities->get();
 		$ready        = ! empty( $capabilities['can_process_local'] ) && ! empty( $capabilities['uploads_writable'] );
+		$active_tab   = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'optimization';
+		$active_tab   = in_array( $active_tab, array( 'optimization', 'diagnostics' ), true ) ? $active_tab : 'optimization';
 		?>
 		<div class="wrap">
 			<div class="wphubb-admin sio-admin">
@@ -149,24 +151,101 @@ class SIO_Admin {
 					</span>
 				</div>
 
+				<?php $this->render_tabs( $active_tab ); ?>
+
 				<?php if ( $saved ) : ?>
 					<div class="wphubb-notice wphubb-notice-success"><strong><?php echo esc_html__( 'Settings saved.', 'simple-image-optimizer' ); ?></strong></div>
 				<?php endif; ?>
 
-				<?php if ( ! $ready ) : ?>
+				<?php if ( ! $ready && 'optimization' === $active_tab ) : ?>
 					<div class="wphubb-notice wphubb-notice-warning"><strong><?php echo esc_html__( 'Local optimization requires GD or Imagick and a writable uploads folder.', 'simple-image-optimizer' ); ?></strong></div>
 				<?php endif; ?>
 
-				<div class="wphubb-grid wphubb-grid-2">
-					<div>
-						<?php $this->render_server_card( $capabilities ); ?>
-						<?php $this->render_optimizer_card( $ready ); ?>
-						<?php $this->render_stats_card( $stats ); ?>
-						<?php $this->render_recent_results_card( $recent ); ?>
+				<?php if ( 'diagnostics' === $active_tab ) : ?>
+					<?php $this->render_diagnostics_tab( $options, $stats, $recent, $capabilities ); ?>
+				<?php else : ?>
+					<div class="wphubb-grid wphubb-grid-2">
+						<div>
+							<?php $this->render_server_card( $capabilities ); ?>
+							<?php $this->render_optimizer_card( $ready ); ?>
+							<?php $this->render_stats_card( $stats ); ?>
+							<?php $this->render_recent_results_card( $recent ); ?>
+						</div>
+						<div>
+							<?php $this->render_settings_form( $options ); ?>
+						</div>
 					</div>
-					<div>
-						<?php $this->render_settings_form( $options ); ?>
-					</div>
+				<?php endif; ?>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render internal admin tabs.
+	 *
+	 * @param string $active_tab Active tab key.
+	 * @return void
+	 */
+	private function render_tabs( $active_tab ) {
+		$base_url = menu_page_url( 'simple-image-optimizer', false );
+		$tabs     = array(
+			'optimization' => __( 'Optimization', 'simple-image-optimizer' ),
+			'diagnostics'  => __( 'Diagnostics', 'simple-image-optimizer' ),
+		);
+		?>
+		<nav class="sio-tabs" aria-label="<?php echo esc_attr__( 'Simple Image Optimizer sections', 'simple-image-optimizer' ); ?>">
+			<?php foreach ( $tabs as $tab => $label ) : ?>
+				<?php
+				$url = 'optimization' === $tab ? remove_query_arg( 'tab', $base_url ) : add_query_arg( 'tab', $tab, $base_url );
+				?>
+				<a class="sio-tab <?php echo esc_attr( $active_tab === $tab ? 'sio-tab-active' : '' ); ?>" href="<?php echo esc_url( $url ); ?>">
+					<?php echo esc_html( $label ); ?>
+				</a>
+			<?php endforeach; ?>
+		</nav>
+		<?php
+	}
+
+	/**
+	 * Render diagnostics tab.
+	 *
+	 * @param array $options Plugin options.
+	 * @param array $stats Stats.
+	 * @param array $recent Recent result rows.
+	 * @param array $capabilities Server capabilities.
+	 * @return void
+	 */
+	private function render_diagnostics_tab( array $options, array $stats, array $recent, array $capabilities ) {
+		$report = $this->build_diagnostic_report( $options, $stats, $recent, $capabilities );
+		?>
+		<div class="sio-diagnostics">
+			<div class="wphubb-card">
+				<h2><?php echo esc_html__( 'Diagnostics', 'simple-image-optimizer' ); ?></h2>
+				<p><?php echo esc_html__( 'Use this section when something does not behave as expected. It keeps technical details separate from the normal optimization flow.', 'simple-image-optimizer' ); ?></p>
+				<div class="wphubb-notice wphubb-notice-info sio-inline-notice">
+					<strong><?php echo esc_html__( 'Privacy note:', 'simple-image-optimizer' ); ?></strong>
+					<span><?php echo esc_html__( 'The report avoids listing local file paths, but review it before sharing it publicly.', 'simple-image-optimizer' ); ?></span>
+				</div>
+			</div>
+
+			<div class="wphubb-grid wphubb-grid-2 sio-diagnostics-grid">
+				<div>
+					<?php $this->render_diagnostic_environment_card( $capabilities ); ?>
+					<?php $this->render_diagnostic_options_card( $options ); ?>
+				</div>
+				<div>
+					<?php $this->render_diagnostic_stats_card( $stats ); ?>
+					<?php $this->render_diagnostic_recent_events_card( $recent ); ?>
+				</div>
+			</div>
+
+			<div class="wphubb-card">
+				<h2><?php echo esc_html__( 'Copy diagnostic report', 'simple-image-optimizer' ); ?></h2>
+				<p><?php echo esc_html__( 'Copy this report when you need to review a support case or compare environments.', 'simple-image-optimizer' ); ?></p>
+				<textarea id="sio-diagnostic-report" class="wphubb-textarea sio-diagnostic-report" readonly><?php echo esc_textarea( $report ); ?></textarea>
+				<div class="sio-actions sio-diagnostic-actions">
+					<button type="button" class="wphubb-button wphubb-button-primary" data-sio-copy-report="#sio-diagnostic-report"><?php echo esc_html__( 'Copy report', 'simple-image-optimizer' ); ?></button>
 				</div>
 			</div>
 		</div>
@@ -438,6 +517,247 @@ class SIO_Admin {
 		}
 
 		return __( 'Error', 'simple-image-optimizer' );
+	}
+
+	/**
+	 * Render environment diagnostics.
+	 *
+	 * @param array $capabilities Server capabilities.
+	 * @return void
+	 */
+	private function render_diagnostic_environment_card( array $capabilities ) {
+		$uploads = wp_get_upload_dir();
+		$rows    = array(
+			__( 'Plugin version', 'simple-image-optimizer' )     => SIO_VERSION,
+			__( 'WordPress version', 'simple-image-optimizer' )  => get_bloginfo( 'version' ),
+			__( 'PHP version', 'simple-image-optimizer' )        => PHP_VERSION,
+			__( 'Environment type', 'simple-image-optimizer' )   => function_exists( 'wp_get_environment_type' ) ? wp_get_environment_type() : __( 'Unknown', 'simple-image-optimizer' ),
+			__( 'WP_DEBUG', 'simple-image-optimizer' )           => $this->format_bool( defined( 'WP_DEBUG' ) && WP_DEBUG ),
+			__( 'Memory limit', 'simple-image-optimizer' )       => defined( 'WP_MEMORY_LIMIT' ) ? WP_MEMORY_LIMIT : ini_get( 'memory_limit' ),
+			__( 'PHP memory limit', 'simple-image-optimizer' )   => ini_get( 'memory_limit' ),
+			__( 'Max execution time', 'simple-image-optimizer' ) => ini_get( 'max_execution_time' ) . 's',
+			__( 'Upload max filesize', 'simple-image-optimizer' ) => ini_get( 'upload_max_filesize' ),
+			__( 'Post max size', 'simple-image-optimizer' )      => ini_get( 'post_max_size' ),
+			__( 'GD', 'simple-image-optimizer' )                 => $this->format_bool( ! empty( $capabilities['gd'] ) ),
+			__( 'Imagick', 'simple-image-optimizer' )            => $this->format_bool( ! empty( $capabilities['imagick'] ) ),
+			__( 'WebP support', 'simple-image-optimizer' )       => $this->format_bool( ! empty( $capabilities['webp'] ) ),
+			__( 'Uploads writable', 'simple-image-optimizer' )   => $this->format_bool( ! empty( $capabilities['uploads_writable'] ) ),
+			__( 'Uploads URL available', 'simple-image-optimizer' ) => $this->format_bool( ! empty( $uploads['baseurl'] ) ),
+			__( 'Preferred editor', 'simple-image-optimizer' )   => isset( $capabilities['preferred_editor'] ) ? $capabilities['preferred_editor'] : __( 'Unknown', 'simple-image-optimizer' ),
+		);
+		?>
+		<div class="wphubb-card">
+			<h2><?php echo esc_html__( 'Environment', 'simple-image-optimizer' ); ?></h2>
+			<p><?php echo esc_html__( 'Technical context that affects local optimization and WebP generation.', 'simple-image-optimizer' ); ?></p>
+			<?php $this->render_diagnostic_rows( $rows ); ?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render plugin option diagnostics.
+	 *
+	 * @param array $options Plugin options.
+	 * @return void
+	 */
+	private function render_diagnostic_options_card( array $options ) {
+		$rows = array(
+			__( 'Quality preset', 'simple-image-optimizer' )          => $options['quality_preset'],
+			__( 'JPEG quality', 'simple-image-optimizer' )            => (string) $options['jpeg_quality'],
+			__( 'WebP quality', 'simple-image-optimizer' )            => (string) $options['webp_quality'],
+			__( 'Max width', 'simple-image-optimizer' )               => (string) $options['max_width'],
+			__( 'Max height', 'simple-image-optimizer' )              => (string) $options['max_height'],
+			__( 'Batch size', 'simple-image-optimizer' )              => (string) $options['batch_size'],
+			__( 'Keep backups', 'simple-image-optimizer' )            => $this->format_bool( ! empty( $options['keep_originals'] ) ),
+			__( 'Generate WebP', 'simple-image-optimizer' )           => $this->format_bool( ! empty( $options['generate_webp'] ) ),
+			__( 'Serve WebP on frontend', 'simple-image-optimizer' )  => $this->format_bool( ! empty( $options['serve_webp_frontend'] ) ),
+			__( 'Optimize generated sizes', 'simple-image-optimizer' ) => $this->format_bool( ! empty( $options['optimize_sizes'] ) ),
+			__( 'Auto optimize uploads', 'simple-image-optimizer' )   => $this->format_bool( ! empty( $options['auto_optimize'] ) ),
+		);
+		?>
+		<div class="wphubb-card">
+			<h2><?php echo esc_html__( 'Plugin settings', 'simple-image-optimizer' ); ?></h2>
+			<p><?php echo esc_html__( 'Current configuration used by the optimizer.', 'simple-image-optimizer' ); ?></p>
+			<?php $this->render_diagnostic_rows( $rows ); ?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render stats diagnostics.
+	 *
+	 * @param array $stats Stats.
+	 * @return void
+	 */
+	private function render_diagnostic_stats_card( array $stats ) {
+		$saved = max( 0, (int) $stats['bytes_before'] - (int) $stats['bytes_after'] );
+		$rows  = array(
+			__( 'Processed', 'simple-image-optimizer' )      => (string) $stats['processed'],
+			__( 'Skipped', 'simple-image-optimizer' )        => (string) $stats['skipped'],
+			__( 'Errors', 'simple-image-optimizer' )         => (string) $stats['errors'],
+			__( 'Bytes before', 'simple-image-optimizer' )   => size_format( (int) $stats['bytes_before'], 1 ),
+			__( 'Bytes after', 'simple-image-optimizer' )    => size_format( (int) $stats['bytes_after'], 1 ),
+			__( 'Estimated saved', 'simple-image-optimizer' ) => size_format( $saved, 1 ),
+			__( 'Last run', 'simple-image-optimizer' )       => $stats['last_run'] ? $stats['last_run'] : __( 'Never', 'simple-image-optimizer' ),
+		);
+		?>
+		<div class="wphubb-card">
+			<h2><?php echo esc_html__( 'Optimization stats', 'simple-image-optimizer' ); ?></h2>
+			<p><?php echo esc_html__( 'Stored counters from previous optimization runs.', 'simple-image-optimizer' ); ?></p>
+			<?php $this->render_diagnostic_rows( $rows ); ?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render recent diagnostic events.
+	 *
+	 * @param array $recent Recent result rows.
+	 * @return void
+	 */
+	private function render_diagnostic_recent_events_card( array $recent ) {
+		?>
+		<div class="wphubb-card">
+			<h2><?php echo esc_html__( 'Recent events', 'simple-image-optimizer' ); ?></h2>
+			<p><?php echo esc_html__( 'Latest optimization outcomes that can explain skipped images or errors.', 'simple-image-optimizer' ); ?></p>
+			<div class="sio-diagnostic-events">
+				<?php if ( empty( $recent ) ) : ?>
+					<div class="sio-empty-state"><?php echo esc_html__( 'No recent events stored yet.', 'simple-image-optimizer' ); ?></div>
+				<?php else : ?>
+					<?php foreach ( array_reverse( array_slice( $recent, -5 ) ) as $result ) : ?>
+						<?php $this->render_diagnostic_event( $result ); ?>
+					<?php endforeach; ?>
+				<?php endif; ?>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render one diagnostic event.
+	 *
+	 * @param array $result Recent result row.
+	 * @return void
+	 */
+	private function render_diagnostic_event( array $result ) {
+		$status = isset( $result['status'] ) ? $result['status'] : 'error';
+		$badge  = 'optimized' === $status ? 'wphubb-badge-active' : ( 'skipped' === $status ? 'wphubb-badge-inactive' : 'wphubb-badge-warning' );
+		$title  = ! empty( $result['title'] ) ? $result['title'] : $result['filename'];
+		?>
+		<div class="sio-diagnostic-event">
+			<span class="wphubb-badge <?php echo esc_attr( $badge ); ?>"><?php echo esc_html( $this->get_status_label( $status ) ); ?></span>
+			<strong><?php echo esc_html( $title ); ?></strong>
+			<span><?php echo esc_html( $result['message'] ); ?></span>
+			<?php if ( ! empty( $result['time'] ) ) : ?>
+				<em><?php echo esc_html( $result['time'] ); ?></em>
+			<?php endif; ?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render key/value diagnostic rows.
+	 *
+	 * @param array $rows Rows.
+	 * @return void
+	 */
+	private function render_diagnostic_rows( array $rows ) {
+		?>
+		<div class="sio-diagnostic-rows">
+			<?php foreach ( $rows as $label => $value ) : ?>
+				<div class="sio-diagnostic-row">
+					<span><?php echo esc_html( $label ); ?></span>
+					<strong><?php echo esc_html( (string) $value ); ?></strong>
+				</div>
+			<?php endforeach; ?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Build a plain-text diagnostic report.
+	 *
+	 * @param array $options Plugin options.
+	 * @param array $stats Stats.
+	 * @param array $recent Recent result rows.
+	 * @param array $capabilities Server capabilities.
+	 * @return string
+	 */
+	private function build_diagnostic_report( array $options, array $stats, array $recent, array $capabilities ) {
+		$saved       = max( 0, (int) $stats['bytes_before'] - (int) $stats['bytes_after'] );
+		$recent_rows = array_slice( array_reverse( $recent ), 0, 5 );
+		$lines       = array(
+			'Simple Image Optimizer diagnostic report',
+			'Generated: ' . current_time( 'mysql' ),
+			'',
+			'[Environment]',
+			'Plugin version: ' . SIO_VERSION,
+			'WordPress version: ' . get_bloginfo( 'version' ),
+			'PHP version: ' . PHP_VERSION,
+			'Environment type: ' . ( function_exists( 'wp_get_environment_type' ) ? wp_get_environment_type() : 'unknown' ),
+			'WP_DEBUG: ' . $this->format_bool( defined( 'WP_DEBUG' ) && WP_DEBUG ),
+			'WP memory limit: ' . ( defined( 'WP_MEMORY_LIMIT' ) ? WP_MEMORY_LIMIT : ini_get( 'memory_limit' ) ),
+			'PHP memory limit: ' . ini_get( 'memory_limit' ),
+			'Max execution time: ' . ini_get( 'max_execution_time' ) . 's',
+			'Upload max filesize: ' . ini_get( 'upload_max_filesize' ),
+			'Post max size: ' . ini_get( 'post_max_size' ),
+			'GD: ' . $this->format_bool( ! empty( $capabilities['gd'] ) ),
+			'Imagick: ' . $this->format_bool( ! empty( $capabilities['imagick'] ) ),
+			'WebP support: ' . $this->format_bool( ! empty( $capabilities['webp'] ) ),
+			'Uploads writable: ' . $this->format_bool( ! empty( $capabilities['uploads_writable'] ) ),
+			'Preferred editor: ' . ( isset( $capabilities['preferred_editor'] ) ? $capabilities['preferred_editor'] : 'unknown' ),
+			'',
+			'[Settings]',
+			'Quality preset: ' . $options['quality_preset'],
+			'JPEG quality: ' . $options['jpeg_quality'],
+			'WebP quality: ' . $options['webp_quality'],
+			'Max width: ' . $options['max_width'],
+			'Max height: ' . $options['max_height'],
+			'Batch size: ' . $options['batch_size'],
+			'Keep backups: ' . $this->format_bool( ! empty( $options['keep_originals'] ) ),
+			'Generate WebP: ' . $this->format_bool( ! empty( $options['generate_webp'] ) ),
+			'Serve WebP on frontend: ' . $this->format_bool( ! empty( $options['serve_webp_frontend'] ) ),
+			'Optimize generated sizes: ' . $this->format_bool( ! empty( $options['optimize_sizes'] ) ),
+			'Auto optimize uploads: ' . $this->format_bool( ! empty( $options['auto_optimize'] ) ),
+			'',
+			'[Stats]',
+			'Processed: ' . $stats['processed'],
+			'Skipped: ' . $stats['skipped'],
+			'Errors: ' . $stats['errors'],
+			'Bytes before: ' . size_format( (int) $stats['bytes_before'], 1 ),
+			'Bytes after: ' . size_format( (int) $stats['bytes_after'], 1 ),
+			'Estimated saved: ' . size_format( $saved, 1 ),
+			'Last run: ' . ( $stats['last_run'] ? $stats['last_run'] : 'never' ),
+			'',
+			'[Recent events]',
+		);
+
+		if ( empty( $recent_rows ) ) {
+			$lines[] = 'No recent events stored.';
+		} else {
+			foreach ( $recent_rows as $result ) {
+				$title   = ! empty( $result['title'] ) ? $result['title'] : $result['filename'];
+				$lines[] = sprintf(
+					'#%d | %s | %s | %s',
+					(int) $result['id'],
+					isset( $result['status'] ) ? $result['status'] : 'error',
+					$title,
+					isset( $result['message'] ) ? $result['message'] : ''
+				);
+			}
+		}
+
+		return implode( "\n", $lines );
+	}
+
+	/**
+	 * Format a boolean value.
+	 *
+	 * @param bool $value Value.
+	 * @return string
+	 */
+	private function format_bool( $value ) {
+		return $value ? __( 'Yes', 'simple-image-optimizer' ) : __( 'No', 'simple-image-optimizer' );
 	}
 
 	/**

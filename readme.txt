@@ -4,7 +4,7 @@ Tags: images, optimization, webp, media, performance
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 0.1.3
+Stable tag: 0.1.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -37,6 +37,7 @@ This plugin does not send files to external APIs and does not include tracking.
 * View and copy WebP URL actions in the Media Library list view.
 * Diagnostic message when WebP metadata exists but the public uploads URL cannot be resolved.
 * Optional frontend WebP delivery for standard WordPress image output.
+* Diagnostics tab with server, plugin settings, stats, recent events and a copyable support report.
 
 == Installation ==
 
@@ -91,6 +92,9 @@ This safe mode does not guarantee complete page-builder coverage. Some Elementor
 No. Images are processed in small AJAX batches to reduce timeout risk on shared hosting.
 
 == Changelog ==
+
+= 0.1.4 =
+* Added a Diagnostics tab with environment details, plugin settings, stats, recent events and a copyable report.
 
 = 0.1.3 =
 * Improved admin screen layout to use the full WordPress admin content area without white side bands.
