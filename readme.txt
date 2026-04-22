@@ -33,6 +33,7 @@ This plugin does not send files to external APIs and does not include tracking.
 * Basic optimization stats.
 * Latest results panel with before/after size, saved bytes, WebP and backup status.
 * Media Library list-view status column with restore action when backups exist.
+* Safety guard to keep the original file when re-encoding would make it larger.
 
 == Installation ==
 
@@ -51,6 +52,8 @@ No. The goal of this plugin is local optimization without sending images to thir
 = Will it preserve the original quality? =
 
 The plugin aims to reduce file size while keeping high visual quality. Perfect lossless quality is not guaranteed when lossy formats or resizing are used.
+
+Some images are already well compressed. If re-encoding would create a larger file, the plugin keeps the original file instead of replacing it.
 
 = Does WebP always work? =
 

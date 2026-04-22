@@ -220,6 +220,7 @@
 		var wrap = document.createElement('div');
 		var webp = document.createElement('span');
 		var backup = document.createElement('span');
+		var kept = parseInt(result.kept_originals || 0, 10);
 
 		wrap.className = 'sio-result-flags';
 		webp.className = 'sio-flag' + (result.webp_created ? ' sio-flag-ok' : '');
@@ -229,6 +230,13 @@
 
 		wrap.appendChild(webp);
 		wrap.appendChild(backup);
+
+		if (kept > 0) {
+			var keptFlag = document.createElement('span');
+			keptFlag.className = 'sio-flag';
+			keptFlag.textContent = kept + ' ' + (labels.kept || 'kept');
+			wrap.appendChild(keptFlag);
+		}
 
 		if (result.time) {
 			var time = document.createElement('span');

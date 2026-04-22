@@ -28,10 +28,13 @@ Reduce image weight from the WordPress admin with a simple batch flow:
 - Latest results panel with before/after size, saved bytes, WebP and backup status.
 - Media Library list-view column with optimization status and restore action when a backup exists.
 - Restore from backup for optimized images, including generated sizes tracked by the plugin.
+- Safety guard: if a re-encoded file becomes larger than the original, the original file is kept.
 
 ## Important limitation
 
 This plugin aims to reduce image weight while keeping high visual quality. It does not promise perfect lossless optimization.
+
+Some images are already compressed. In those cases, WordPress/GD/Imagick re-encoding can produce a larger file. The plugin now keeps the original file instead of replacing it with a larger result.
 
 ## Safe workflow
 

@@ -95,6 +95,7 @@ class SIO_Admin {
 					'webp'      => __( 'WebP', 'simple-image-optimizer' ),
 					'backup'    => __( 'Backup', 'simple-image-optimizer' ),
 					'sizes'     => __( 'Sizes:', 'simple-image-optimizer' ),
+					'kept'      => __( 'Kept original', 'simple-image-optimizer' ),
 				),
 			)
 		);
@@ -380,6 +381,19 @@ class SIO_Admin {
 								/* translators: %d: optimized generated image sizes. */
 								__( '%d sizes', 'simple-image-optimizer' ),
 								(int) $result['sizes_processed']
+							)
+						);
+						?>
+					</span>
+				<?php endif; ?>
+				<?php if ( ! empty( $result['kept_originals'] ) ) : ?>
+					<span class="sio-flag">
+						<?php
+						echo esc_html(
+							sprintf(
+								/* translators: %d: files kept unchanged because optimized output was larger. */
+								__( '%d kept', 'simple-image-optimizer' ),
+								(int) $result['kept_originals']
 							)
 						);
 						?>

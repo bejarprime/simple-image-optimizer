@@ -68,6 +68,7 @@ class SIO_Optimizer {
 		$files              = $this->get_attachment_files( $attachment_id, $path, $mime, ! empty( $options['optimize_sizes'] ) );
 		$webp_files         = array();
 		$backup_files       = array();
+		$kept_originals     = 0;
 
 		foreach ( $files as $file ) {
 			$file_result = $this->optimize_file( $file, $options );
@@ -88,6 +89,10 @@ class SIO_Optimizer {
 
 			if ( ! empty( $file_result['backup_path'] ) ) {
 				$backup_files[] = $file_result['backup_path'];
+			}
+
+			if ( ! empty( $file_result['kept_original'] ) ) {
+				$kept_originals++;
 			}
 
 			if ( empty( $file['is_main'] ) ) {
@@ -118,7 +123,10 @@ class SIO_Optimizer {
 
 		$result['optimized'] = true;
 		$result['status']    = 'optimized';
-		$result['message']   = __( 'Optimized successfully.', 'simple-image-optimizer' );
+		$result['message']   = $kept_originals > 0
+			? __( 'Optimized safely. Files that became larger were kept unchanged.', 'simple-image-optimizer' )
+			: __( 'Optimized successfully.', 'simple-image-optimizer' );
+		$result['kept_originals'] = $kept_originals;
 
 		return $result;
 	}
@@ -216,6 +224,7 @@ class SIO_Optimizer {
 			'backup_path'     => '',
 			'backup_created'  => false,
 			'sizes_processed' => 0,
+			'kept_originals'  => 0,
 			'time'            => current_time( 'mysql' ),
 		);
 	}
@@ -297,12 +306,24 @@ class SIO_Optimizer {
 		$backup_path  = '';
 		$webp_path    = '';
 
+		if ( ! function_exists( 'wp_tempnam' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+		}
+
+		$temp_path    = wp_tempnam( wp_basename( $path ) );
+		$kept_original = false;
+
+		if ( ! $temp_path || ! @copy( $path, $temp_path ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_copy
+			return new WP_Error( 'sio_temp_copy_failed', __( 'Could not create a temporary safety copy before optimization.', 'simple-image-optimizer' ) );
+		}
+
 		if ( ! empty( $options['keep_originals'] ) ) {
 			$backup_path = $this->create_backup( $path );
 		}
 
 		$editor = wp_get_image_editor( $path );
 		if ( is_wp_error( $editor ) ) {
+			wp_delete_file( $temp_path );
 			return $editor;
 		}
 
@@ -317,12 +338,23 @@ class SIO_Optimizer {
 
 		$saved = $editor->save( $path, $mime );
 		if ( is_wp_error( $saved ) ) {
+			wp_delete_file( $temp_path );
 			return $saved;
 		}
 
 		clearstatcache( true, $path );
 		$bytes_after = filesize( $path );
 		$bytes_after = false === $bytes_after ? $bytes_before : (int) $bytes_after;
+
+		if ( $bytes_after > $bytes_before ) {
+			@copy( $temp_path, $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_copy
+			clearstatcache( true, $path );
+			$restored_size = filesize( $path );
+			$bytes_after   = false === $restored_size ? $bytes_before : (int) $restored_size;
+			$kept_original = true;
+		}
+
+		wp_delete_file( $temp_path );
 
 		if ( ! empty( $options['generate_webp'] ) ) {
 			$webp = $this->generate_webp( $path, (int) $options['webp_quality'] );
@@ -337,6 +369,7 @@ class SIO_Optimizer {
 			'bytes_saved'  => max( 0, $bytes_before - $bytes_after ),
 			'backup_path'  => $backup_path,
 			'webp_path'    => $webp_path,
+			'kept_original' => $kept_original,
 		);
 	}
 

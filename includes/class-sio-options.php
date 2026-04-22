@@ -251,6 +251,7 @@ class SIO_Options {
 			'webp_created'   => ! empty( $result['webp_created'] ),
 			'backup_created'  => ! empty( $result['backup_created'] ),
 			'sizes_processed' => isset( $result['sizes_processed'] ) ? absint( $result['sizes_processed'] ) : 0,
+			'kept_originals'  => isset( $result['kept_originals'] ) ? absint( $result['kept_originals'] ) : 0,
 			'time'            => isset( $result['time'] ) ? sanitize_text_field( $result['time'] ) : '',
 		);
 	}
