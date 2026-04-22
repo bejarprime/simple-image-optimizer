@@ -4,7 +4,7 @@ Tags: images, optimization, webp, media, performance
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 0.1.4
+Stable tag: 0.1.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -92,6 +92,9 @@ This safe mode does not guarantee complete page-builder coverage. Some Elementor
 No. Images are processed in small AJAX batches to reduce timeout risk on shared hosting.
 
 == Changelog ==
+
+= 0.1.5 =
+* Improved the Latest results panel layout with a full-width scrollable 2-column grid.
 
 = 0.1.4 =
 * Added a Diagnostics tab with environment details, plugin settings, stats, recent events and a copyable report.

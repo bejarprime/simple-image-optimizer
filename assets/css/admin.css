@@ -254,13 +254,15 @@ body.simple-image-optimizer-admin-page .wrap {
 .sio-toggle-description { margin: -9px 0 15px 46px; }
 .sio-inline-notice { margin-top: 18px; }
 .sio-submit { margin: 18px 0 0; padding: 0; }
-.sio-results-list { display: grid; gap: 12px; margin-top: 18px; }
+.sio-results-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; max-height: 430px; overflow-y: auto; padding-right: 6px; margin-top: 18px; }
+.sio-results-list .sio-empty-state { grid-column: 1 / -1; }
 .sio-empty-state { padding: 16px; border: 1px dashed var(--wphubb-border); border-radius: var(--wphubb-radius-sm); color: var(--wphubb-muted); background: rgba(255, 255, 255, 0.025); font-size: 13px; line-height: 1.5; }
 .sio-result-row { display: grid; gap: 12px; padding: 14px; border: 1px solid var(--wphubb-border); border-radius: var(--wphubb-radius-md); background: rgba(255, 255, 255, 0.035); }
 .sio-result-main { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
 .sio-result-main strong { color: var(--wphubb-text); font-size: 13px; }
 .sio-result-main > span:last-child { flex-basis: 100%; color: var(--wphubb-muted); font-size: 12px; line-height: 1.45; }
 .sio-result-meta { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.sio-results-list .sio-result-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .sio-result-meta span { padding: 9px 10px; border-radius: var(--wphubb-radius-sm); background: rgba(13, 14, 16, 0.58); color: var(--wphubb-dim); font-size: 11px; }
 .sio-result-meta strong { display: block; margin-top: 3px; color: var(--wphubb-text-soft); font-size: 13px; }
 .sio-result-flags { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
@@ -301,6 +303,8 @@ body.simple-image-optimizer-admin-page .wrap {
 	.sio-status-grid,
 	.sio-metric-grid,
 	.sio-two-cols,
+	.sio-results-list,
+	.sio-results-list .sio-result-meta,
 	.sio-result-meta { grid-template-columns: 1fr; }
 	.wphubb-header { align-items: flex-start; flex-direction: column; }
 	.sio-diagnostic-row { align-items: flex-start; flex-direction: column; }

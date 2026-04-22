@@ -169,12 +169,12 @@ class SIO_Admin {
 							<?php $this->render_server_card( $capabilities ); ?>
 							<?php $this->render_optimizer_card( $ready ); ?>
 							<?php $this->render_stats_card( $stats ); ?>
-							<?php $this->render_recent_results_card( $recent ); ?>
 						</div>
 						<div>
 							<?php $this->render_settings_form( $options ); ?>
 						</div>
 					</div>
+					<?php $this->render_recent_results_card( $recent ); ?>
 				<?php endif; ?>
 			</div>
 		</div>
