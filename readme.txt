@@ -4,7 +4,7 @@ Tags: images, optimization, webp, media, performance
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 0.1.0
+Stable tag: 0.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -35,6 +35,7 @@ This plugin does not send files to external APIs and does not include tracking.
 * Media Library list-view status column with restore action when backups exist.
 * Safety guard to keep the original file when re-encoding would make it larger.
 * View and copy WebP URL actions in the Media Library list view.
+* Diagnostic message when WebP metadata exists but the public uploads URL cannot be resolved.
 
 == Installation ==
 
@@ -64,6 +65,8 @@ No. WebP generation depends on server support through the available image engine
 
 Generated WebP files are stored in the same uploads folder as the original file. In the Media Library list view, the Optimization column shows View WebP and Copy WebP URL actions when a WebP file exists.
 
+If the column shows the WebP badge but no WebP action, the plugin displays a diagnostic message. This normally means metadata exists, but the stored path cannot be mapped to a public uploads URL.
+
 = Can I restore an optimized image? =
 
 Yes, when local backups were enabled before optimization. The restore action appears in the Media Library list view for optimized images with a backup.
@@ -81,6 +84,9 @@ Yes. Automatic optimization can be enabled in the plugin settings. It is disable
 No. Images are processed in small AJAX batches to reduce timeout risk on shared hosting.
 
 == Changelog ==
+
+= 0.1.1 =
+* Improved WebP URL resolution and Media Library diagnostics when WebP metadata cannot be mapped to a public uploads URL.
 
 = 0.1.0 =
 * Initial development version.

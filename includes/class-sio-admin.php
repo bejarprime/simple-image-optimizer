@@ -476,6 +476,8 @@ class SIO_Admin {
 			}
 		}
 
+		$webp_file = $this->get_upload_file_data_from_path( $webp_path );
+
 		echo '<div class="sio-media-status">';
 
 		if ( $is_optimized ) {
@@ -493,12 +495,16 @@ class SIO_Admin {
 				echo '<button type="button" class="button button-small sio-media-restore" data-sio-restore-media="' . esc_attr( $attachment_id ) . '">' . esc_html__( 'Restore', 'simple-image-optimizer' ) . '</button>';
 			}
 
-			$webp_url = $this->get_upload_url_from_path( $webp_path );
-			if ( '' !== $webp_url ) {
+			if ( '' !== $webp_file['url'] ) {
 				echo '<span class="sio-media-actions">';
-				echo '<a class="button button-small" href="' . esc_url( $webp_url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'View WebP', 'simple-image-optimizer' ) . '</a>';
-				echo '<button type="button" class="button button-small" data-sio-copy-webp="' . esc_attr( $webp_url ) . '">' . esc_html__( 'Copy WebP URL', 'simple-image-optimizer' ) . '</button>';
+				echo '<a class="button button-small" href="' . esc_url( $webp_file['url'] ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'View WebP', 'simple-image-optimizer' ) . '</a>';
+				echo '<button type="button" class="button button-small" data-sio-copy-webp="' . esc_attr( $webp_file['url'] ) . '">' . esc_html__( 'Copy WebP URL', 'simple-image-optimizer' ) . '</button>';
 				echo '</span>';
+				if ( ! $webp_file['exists'] ) {
+					echo '<span class="sio-media-line sio-media-line-warning">' . esc_html__( 'WebP URL resolved, but the file was not found on disk.', 'simple-image-optimizer' ) . '</span>';
+				}
+			} elseif ( '' !== $webp_path ) {
+				echo '<span class="sio-media-line sio-media-line-warning">' . esc_html__( 'WebP exists in metadata, but its uploads URL could not be resolved.', 'simple-image-optimizer' ) . '</span>';
 			}
 		} elseif ( '' !== $last_error ) {
 			echo '<span class="sio-media-badge sio-media-badge-error">' . esc_html__( 'Error', 'simple-image-optimizer' ) . '</span>';
@@ -511,34 +517,89 @@ class SIO_Admin {
 	}
 
 	/**
-	 * Convert an uploads filesystem path to a public uploads URL.
+	 * Get public URL and disk status for an uploads file path.
 	 *
 	 * @param string $path File path.
-	 * @return string
+	 * @return array
 	 */
-	private function get_upload_url_from_path( $path ) {
-		if ( ! is_string( $path ) || '' === $path || ! file_exists( $path ) ) {
-			return '';
+	private function get_upload_file_data_from_path( $path ) {
+		$data = array(
+			'url'      => '',
+			'path'     => '',
+			'relative' => '',
+			'exists'   => false,
+		);
+
+		if ( ! is_string( $path ) || '' === trim( $path ) ) {
+			return $data;
 		}
 
 		$uploads = wp_get_upload_dir();
 		if ( empty( $uploads['basedir'] ) || empty( $uploads['baseurl'] ) ) {
-			return '';
+			return $data;
 		}
 
-		$base = wp_normalize_path( untrailingslashit( $uploads['basedir'] ) );
-		$file = wp_normalize_path( $path );
+		$base_dir = wp_normalize_path( untrailingslashit( $uploads['basedir'] ) );
+		$file     = wp_normalize_path( trim( $path ) );
+		$relative = '';
 
-		if ( 0 !== strpos( $file, $base ) ) {
-			return '';
+		if ( $base_dir === $file || 0 === strpos( $file, $base_dir . '/' ) ) {
+			$relative = ltrim( substr( $file, strlen( $base_dir ) ), '/' );
+		} elseif ( $this->is_absolute_path( $file ) ) {
+			$uploads_marker = '/wp-content/uploads/';
+			$marker_pos     = strpos( $file, $uploads_marker );
+			if ( false !== $marker_pos ) {
+				$relative = substr( $file, $marker_pos + strlen( $uploads_marker ) );
+			}
+		} else {
+			$relative         = ltrim( $file, '/' );
+			$uploads_basename = wp_basename( $base_dir );
+			if ( '' !== $uploads_basename && 0 === strpos( $relative, $uploads_basename . '/' ) ) {
+				$relative = substr( $relative, strlen( $uploads_basename ) + 1 );
+			}
 		}
 
-		$relative = ltrim( substr( $file, strlen( $base ) ), '/' );
-		if ( '' === $relative ) {
-			return '';
+		$relative = ltrim( wp_normalize_path( $relative ), '/' );
+		$relative_uploads_marker = 'wp-content/uploads/';
+		$relative_marker_pos     = strpos( $relative, $relative_uploads_marker );
+		if ( false !== $relative_marker_pos ) {
+			$relative = substr( $relative, $relative_marker_pos + strlen( $relative_uploads_marker ) );
 		}
 
-		return trailingslashit( $uploads['baseurl'] ) . str_replace( '%2F', '/', rawurlencode( $relative ) );
+		$base_url_path = wp_parse_url( $uploads['baseurl'], PHP_URL_PATH );
+		if ( is_string( $base_url_path ) && '' !== $base_url_path ) {
+			$base_url_path       = ltrim( wp_normalize_path( $base_url_path ), '/' );
+			$base_url_marker_pos = strpos( $base_url_path, $relative_uploads_marker );
+			if ( false !== $base_url_marker_pos ) {
+				$base_url_relative = substr( $base_url_path, $base_url_marker_pos + strlen( $relative_uploads_marker ) );
+				if ( '' !== $base_url_relative && 0 === strpos( $relative, trailingslashit( $base_url_relative ) ) ) {
+					$relative = substr( $relative, strlen( trailingslashit( $base_url_relative ) ) );
+				}
+			}
+		}
+
+		if ( '' === $relative || false !== strpos( $relative, '../' ) || '..' === $relative || 0 === strpos( $relative, '../' ) ) {
+			return $data;
+		}
+
+		$file_path = wp_normalize_path( trailingslashit( $base_dir ) . $relative );
+
+		$data['path']     = $file_path;
+		$data['relative'] = $relative;
+		$data['exists']   = file_exists( $file_path );
+		$data['url']      = trailingslashit( $uploads['baseurl'] ) . implode( '/', array_map( 'rawurlencode', explode( '/', $relative ) ) );
+
+		return $data;
+	}
+
+	/**
+	 * Determine whether a normalized path is absolute.
+	 *
+	 * @param string $path File path.
+	 * @return bool
+	 */
+	private function is_absolute_path( $path ) {
+		return 0 === strpos( $path, '/' ) || 1 === strpos( $path, ':' );
 	}
 
 	/** Save settings. */

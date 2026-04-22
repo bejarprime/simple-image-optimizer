@@ -30,6 +30,7 @@ Reduce image weight from the WordPress admin with a simple batch flow:
 - Restore from backup for optimized images, including generated sizes tracked by the plugin.
 - Safety guard: if a re-encoded file becomes larger than the original, the original file is kept.
 - `View WebP` and `Copy WebP URL` actions in the Media Library list view when a WebP file exists.
+- Diagnostic warning in the Media Library when WebP metadata exists but the file URL cannot be resolved.
 
 ## Important limitation
 
@@ -45,6 +46,8 @@ Some images are already compressed. In those cases, WordPress/GD/Imagick re-enco
 4. Review the Latest results panel or switch the Media Library to list view.
 5. Use `View WebP` or `Copy WebP URL` in the Optimization column to inspect generated WebP files.
 6. Use `Restore` in the Optimization column if an image needs to be reverted.
+
+If the column shows a WebP badge but no WebP action, the plugin will now show a diagnostic line. That usually means the stored WebP metadata exists, but the file path cannot be mapped back to a public uploads URL.
 
 ## Status
 
