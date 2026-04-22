@@ -164,7 +164,7 @@ class SIO_Optimizer {
 			}
 
 			$target_path = $this->target_from_backup_path( $backup_path );
-			if ( ! $this->is_safe_upload_path( $target_path ) || ! wp_is_writable( dirname( $target_path ) ) ) {
+			if ( '' === $target_path || $target_path === $backup_path || ! $this->is_safe_upload_path( $target_path ) || ! wp_is_writable( dirname( $target_path ) ) ) {
 				continue;
 			}
 
@@ -388,7 +388,14 @@ class SIO_Optimizer {
 		$base    = ! empty( $uploads['basedir'] ) ? realpath( $uploads['basedir'] ) : false;
 		$real    = realpath( $path );
 
-		return $base && $real && 0 === strpos( wp_normalize_path( $real ), wp_normalize_path( $base ) );
+		if ( ! $base || ! $real ) {
+			return false;
+		}
+
+		$base = untrailingslashit( wp_normalize_path( $base ) );
+		$real = wp_normalize_path( $real );
+
+		return $real === $base || 0 === strpos( $real, trailingslashit( $base ) );
 	}
 
 	/**
@@ -415,6 +422,10 @@ class SIO_Optimizer {
 	 * @return string
 	 */
 	private function target_from_backup_path( $backup_path ) {
+		if ( ! is_string( $backup_path ) || ! preg_match( '/\.sio-original\.[^.]+$/', $backup_path ) ) {
+			return '';
+		}
+
 		$target_path = preg_replace( '/\.sio-original\.([^.]+)$/', '.$1', $backup_path );
 		return is_string( $target_path ) ? $target_path : '';
 	}

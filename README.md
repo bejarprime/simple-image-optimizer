@@ -30,6 +30,7 @@ Reduce image weight from the WordPress admin with a simple batch flow:
 - Media Library list-view column with optimization status and restore action when a backup exists.
 - Restore from backup for optimized images, including generated sizes tracked by the plugin.
 - Safety guard: if a re-encoded file becomes larger than the original, the original file is kept.
+- Hardened upload path validation before writing, restoring or deleting generated files.
 - `View WebP` and `Copy WebP URL` actions in the Media Library list view when a WebP file exists.
 - Diagnostic warning in the Media Library when WebP metadata exists but the file URL cannot be resolved.
 - Optional frontend WebP delivery for standard WordPress image output.
