@@ -82,6 +82,8 @@ class SIO_Admin {
 				'confirmOptimize'  => __( 'Start optimizing the selected images? Backups are created when enabled in settings.', 'simple-image-optimizer' ),
 				'confirmRestore'   => __( 'Restore this image from the local backup? Generated WebP files created by this plugin will be removed.', 'simple-image-optimizer' ),
 				'restored'         => __( 'Restored from backup.', 'simple-image-optimizer' ),
+				'copied'           => __( 'Copied.', 'simple-image-optimizer' ),
+				'copyFailed'       => __( 'Could not copy the URL automatically. Please copy it manually.', 'simple-image-optimizer' ),
 				'genericError'     => __( 'Something went wrong. Please try again.', 'simple-image-optimizer' ),
 				'bytesSavedLabel'  => __( 'estimated saved', 'simple-image-optimizer' ),
 				'labels'           => array(
@@ -467,6 +469,13 @@ class SIO_Admin {
 		$sizes_processed = (int) get_post_meta( $attachment_id, '_sio_sizes_processed', true );
 		$saved           = max( 0, $bytes_before - $bytes_after );
 
+		if ( '' === $webp_path ) {
+			$webp_files = get_post_meta( $attachment_id, '_sio_webp_files', true );
+			if ( is_array( $webp_files ) && ! empty( $webp_files[0] ) && is_string( $webp_files[0] ) ) {
+				$webp_path = $webp_files[0];
+			}
+		}
+
 		echo '<div class="sio-media-status">';
 
 		if ( $is_optimized ) {
@@ -483,6 +492,14 @@ class SIO_Admin {
 			if ( '' !== $backup_path ) {
 				echo '<button type="button" class="button button-small sio-media-restore" data-sio-restore-media="' . esc_attr( $attachment_id ) . '">' . esc_html__( 'Restore', 'simple-image-optimizer' ) . '</button>';
 			}
+
+			$webp_url = $this->get_upload_url_from_path( $webp_path );
+			if ( '' !== $webp_url ) {
+				echo '<span class="sio-media-actions">';
+				echo '<a class="button button-small" href="' . esc_url( $webp_url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'View WebP', 'simple-image-optimizer' ) . '</a>';
+				echo '<button type="button" class="button button-small" data-sio-copy-webp="' . esc_attr( $webp_url ) . '">' . esc_html__( 'Copy WebP URL', 'simple-image-optimizer' ) . '</button>';
+				echo '</span>';
+			}
 		} elseif ( '' !== $last_error ) {
 			echo '<span class="sio-media-badge sio-media-badge-error">' . esc_html__( 'Error', 'simple-image-optimizer' ) . '</span>';
 			echo '<span class="sio-media-line">' . esc_html( $last_error ) . '</span>';
@@ -491,6 +508,37 @@ class SIO_Admin {
 		}
 
 		echo '</div>';
+	}
+
+	/**
+	 * Convert an uploads filesystem path to a public uploads URL.
+	 *
+	 * @param string $path File path.
+	 * @return string
+	 */
+	private function get_upload_url_from_path( $path ) {
+		if ( ! is_string( $path ) || '' === $path || ! file_exists( $path ) ) {
+			return '';
+		}
+
+		$uploads = wp_get_upload_dir();
+		if ( empty( $uploads['basedir'] ) || empty( $uploads['baseurl'] ) ) {
+			return '';
+		}
+
+		$base = wp_normalize_path( untrailingslashit( $uploads['basedir'] ) );
+		$file = wp_normalize_path( $path );
+
+		if ( 0 !== strpos( $file, $base ) ) {
+			return '';
+		}
+
+		$relative = ltrim( substr( $file, strlen( $base ) ), '/' );
+		if ( '' === $relative ) {
+			return '';
+		}
+
+		return trailingslashit( $uploads['baseurl'] ) . str_replace( '%2F', '/', rawurlencode( $relative ) );
 	}
 
 	/** Save settings. */

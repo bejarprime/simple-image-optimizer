@@ -34,6 +34,7 @@ This plugin does not send files to external APIs and does not include tracking.
 * Latest results panel with before/after size, saved bytes, WebP and backup status.
 * Media Library list-view status column with restore action when backups exist.
 * Safety guard to keep the original file when re-encoding would make it larger.
+* View and copy WebP URL actions in the Media Library list view.
 
 == Installation ==
 
@@ -58,6 +59,10 @@ Some images are already well compressed. If re-encoding would create a larger fi
 = Does WebP always work? =
 
 No. WebP generation depends on server support through the available image engine.
+
+= Where can I find the generated WebP file? =
+
+Generated WebP files are stored in the same uploads folder as the original file. In the Media Library list view, the Optimization column shows View WebP and Copy WebP URL actions when a WebP file exists.
 
 = Can I restore an optimized image? =
 

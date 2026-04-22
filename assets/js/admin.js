@@ -268,6 +268,31 @@
 		});
 	}
 
+	function copyWebpUrl(button) {
+		var url = button.getAttribute('data-sio-copy-webp');
+		var originalText = button.textContent;
+
+		if (!url) {
+			return;
+		}
+
+		function markCopied() {
+			button.textContent = sioAdmin.copied || 'Copied.';
+			window.setTimeout(function () {
+				button.textContent = originalText;
+			}, 1600);
+		}
+
+		if (navigator.clipboard && navigator.clipboard.writeText) {
+			navigator.clipboard.writeText(url).then(markCopied).catch(function () {
+				window.prompt(sioAdmin.copyFailed || 'Copy this URL:', url);
+			});
+			return;
+		}
+
+		window.prompt(sioAdmin.copyFailed || 'Copy this URL:', url);
+	}
+
 	function formatBytes(bytes) {
 		if (bytes < 1024) {
 			return bytes + ' B';
@@ -342,6 +367,11 @@
 			var restoreButton = event.target.closest('[data-sio-restore-media]');
 			if (restoreButton) {
 				restoreAttachment(restoreButton);
+			}
+
+			var copyButton = event.target.closest('[data-sio-copy-webp]');
+			if (copyButton) {
+				copyWebpUrl(copyButton);
 			}
 		});
 	});
